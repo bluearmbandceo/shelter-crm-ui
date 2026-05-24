@@ -76,7 +76,7 @@
 
                         <div class="table-container">
                             <table class="table table-hover align-middle">
-                                <thead class="table-light"><tr><th>ID</th><th>Вид</th><th>Ім'я</th><th>Стан</th><th>Статус</th><th>Дії</th></tr></thead>
+                                <thead class="table-light"><tr><th>ID</th><th>Вид</th><th>Ім'я</th><th>Стан</th><th>Щеплення</th><th>Статус</th><th>Дії</th></tr></thead>
                                 <tbody id="animal-table-body"></tbody>
                             </table>
                         </div>
@@ -115,6 +115,10 @@
                         <option value="На карантині">На карантині</option>
                         <option value="Травмований">Травмований</option>
                     </select>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="vaccineInput">
+                    <label class="form-check-label fw-bold">Щеплений</label>
                 </div>
             </form>
         </div>
@@ -209,7 +213,7 @@
     let allAnimals = [];
     let filteredAnimals = [];
     let currentPage = 1;
-    const rowsPerPage = 5; // Кількість тварин на сторінку
+    const rowsPerPage = 5; 
 
     async function loadAnimals() {
         try {
@@ -218,7 +222,7 @@
             filteredAnimals = allAnimals; 
             currentPage = 1;
             renderAnimalsTable();
-        } catch (e) { document.getElementById('animal-table-body').innerHTML = '<tr><td colspan="6">Помилка API</td></tr>'; }
+        } catch (e) { document.getElementById('animal-table-body').innerHTML = '<tr><td colspan="7">Помилка API</td></tr>'; }
     }
 
     function handleSearch() {
@@ -241,6 +245,7 @@
         tbody.innerHTML = paginatedData.map(i => `<tr>
             <td class="fw-bold text-secondary">A-00${i.animalID}</td><td>${i.species}</td><td class="fw-bold">${i.name}</td>
             <td><span class="badge ${i.currentCondition === "Здоровий" ? "bg-success" : "bg-danger"}">${i.currentCondition}</span></td>
+            <td>${i.isVaccinated ? '<i class="fa-solid fa-check text-success"></i> Так' : '<i class="fa-solid fa-xmark text-danger"></i> Ні'}</td>
             <td><span class="badge ${i.status === 'Adopted' ? 'bg-success' : 'bg-primary'}">${i.status}</span></td>
             <td>
                 ${i.status !== 'Adopted' ? `<button class="btn btn-sm btn-outline-success me-1" title="Віддати в сім'ю" onclick="openAdoptModal(${i.animalID})"><i class="fa-solid fa-house"></i></button>` : ''}
@@ -283,7 +288,6 @@
         } catch (e) {}
     }
 
-    // НОВА ФУНКЦІЯ: Відкриття вікна усиновлення
     async function openAdoptModal(animalId) {
         document.getElementById('adoptAnimalId').value = animalId;
         const res = await apiFetch('Adopters');
@@ -293,7 +297,6 @@
         new bootstrap.Modal(document.getElementById('adoptActionModal')).show();
     }
 
-    // НОВА ФУНКЦІЯ: Підтвердження усиновлення
     async function submitAdoption() {
         const animalId = document.getElementById('adoptAnimalId').value;
         const adopterId = document.getElementById('adoptAdopterSelect').value;
@@ -306,7 +309,6 @@
         } catch(e) { alert("Помилка"); }
     }
 
-    // CRUD Операції
     async function createItem(endpoint, payload, modalId, formId, reloadFunc) {
         try {
             await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
@@ -322,12 +324,19 @@
         }
     }
 
-    async function submitNewAnimal() { await createItem('Animals', { species: document.getElementById('speciesInput').value, name: document.getElementById('nameInput').value, currentCondition: document.getElementById('conditionInput').value, isVaccinated: false, status: "In Shelter" }, 'addAnimalModal', 'addAnimalForm', loadAnimals); }
+    async function submitNewAnimal() { 
+        await createItem('Animals', { 
+            species: document.getElementById('speciesInput').value, 
+            name: document.getElementById('nameInput').value, 
+            currentCondition: document.getElementById('conditionInput').value, 
+            isVaccinated: document.getElementById('vaccineInput').checked, 
+            status: "In Shelter" 
+        }, 'addAnimalModal', 'addAnimalForm', loadAnimals); 
+    }
     async function submitNewVolunteer() { await createItem('Volunteers', { fullName: document.getElementById('volNameInput').value, phone: document.getElementById('volPhoneInput').value, duty: document.getElementById('volDutyInput').value }, 'addVolunteerModal', 'addVolunteerForm', loadVolunteers); }
     async function submitNewAdopter() { await createItem('Adopters', { fullName: document.getElementById('adopterNameInput').value, phone: document.getElementById('adopterPhoneInput').value, address: document.getElementById('adopterAddressInput').value }, 'addAdopterModal', 'addAdopterForm', loadAdopters); }
     async function submitNewMedical() { await createItem('MedicalRecords', { animalID: parseInt(document.getElementById('medAnimalIdInput').value), diagnosis: document.getElementById('medDiagnosisInput').value, treatment: document.getElementById('medTreatmentInput').value }, 'addMedicalModal', 'addMedicalForm', loadMedical); }
 
-    // Init
     document.addEventListener('DOMContentLoaded', checkAuth);
 </script>
 </body>
