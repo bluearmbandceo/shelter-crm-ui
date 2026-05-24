@@ -17,9 +17,10 @@
         .page-section { display: none; }
         .page-section.active { display: block; }
         .stat-card { border-radius: 10px; padding: 20px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        /* Стилі для екрану логіну */
         #login-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #212529; }
         .login-box { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        /* Робимо перемикач щеплення більшим і красивішим */
+        .form-check-input:checked { background-color: #198754; border-color: #198754; }
     </style>
 </head>
 <body>
@@ -98,11 +99,11 @@
             <form id="addAnimalForm">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Вид</label>
-                    <select class="form-select" id="speciesInput" required>
-                        <option value="Кіт">Кіт</option>
-                        <option value="Собака">Собака</option>
-                        <option value="Інше">Інше</option>
-                    </select>
+                    <input class="form-control" list="speciesOptions" id="speciesInput" placeholder="Оберіть зі списку або напишіть свій..." required>
+                    <datalist id="speciesOptions">
+                        <option value="Кіт"></option>
+                        <option value="Собака"></option>
+                    </datalist>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Ім'я</label>
@@ -116,13 +117,13 @@
                         <option value="Травмований">Травмований</option>
                     </select>
                 </div>
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="vaccineInput">
-                    <label class="form-check-label fw-bold">Щеплений</label>
+                <div class="form-check form-switch mt-4 mb-2">
+                    <input class="form-check-input" type="checkbox" id="vaccineInput" style="transform: scale(1.5); margin-left: -2.5em;">
+                    <label class="form-check-label fw-bold ms-2 mt-1">Щеплення зроблено</label>
                 </div>
             </form>
         </div>
-        <div class="modal-footer"><button type="button" class="btn btn-primary fw-bold" onclick="submitNewAnimal()">Зберегти</button></div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary fw-bold" onclick="submitNewAnimal()">Зберегти в базу</button></div>
     </div></div>
 </div>
 
@@ -148,7 +149,6 @@
     const baseUrl = 'https://shelter-final-production.up.railway.app/api';
     let token = localStorage.getItem('shelter_token');
 
-    // Перевірка авторизації
     function checkAuth() {
         if (token) {
             document.getElementById('login-screen').style.display = 'none';
@@ -160,7 +160,6 @@
         }
     }
 
-    // Логіка входу
     async function login() {
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
@@ -181,7 +180,6 @@
 
     function logout() { localStorage.removeItem('shelter_token'); token = null; checkAuth(); }
 
-    // Універсальний Fetch-запит з токеном безпеки
     async function apiFetch(endpoint, options = {}) {
         const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
         const res = await fetch(`${baseUrl}/${endpoint}`, { ...options, headers });
@@ -209,7 +207,6 @@
         } catch (e) {}
     }
 
-    // --- 1. ANIMALS (З ПОШУКОМ ТА ПАГІНАЦІЄЮ) ---
     let allAnimals = [];
     let filteredAnimals = [];
     let currentPage = 1;
@@ -237,14 +234,13 @@
 
     function renderAnimalsTable() {
         const tbody = document.getElementById('animal-table-body');
-        
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const paginatedData = filteredAnimals.slice(start, end);
 
         tbody.innerHTML = paginatedData.map(i => `<tr>
             <td class="fw-bold text-secondary">A-00${i.animalID}</td><td>${i.species}</td><td class="fw-bold">${i.name}</td>
-            <td><span class="badge ${i.currentCondition === "Здоровий" ? "bg-success" : "bg-danger"}">${i.currentCondition}</span></td>
+            <td><span class="badge ${i.currentCondition === "Здоровий" ? "bg-success" : (i.currentCondition === "На карантині" ? "bg-warning text-dark" : "bg-danger")}">${i.currentCondition}</span></td>
             <td>${i.isVaccinated ? '<i class="fa-solid fa-check text-success"></i> Так' : '<i class="fa-solid fa-xmark text-danger"></i> Ні'}</td>
             <td><span class="badge ${i.status === 'Adopted' ? 'bg-success' : 'bg-primary'}">${i.status}</span></td>
             <td>
@@ -256,13 +252,8 @@
         document.getElementById('pageInfo').innerText = `Сторінка ${currentPage} з ${totalPages}`;
     }
 
-    function prevPage() { 
-        if (currentPage > 1) { currentPage--; renderAnimalsTable(); } 
-    }
-    
-    function nextPage() { 
-        if (currentPage < Math.ceil(filteredAnimals.length / rowsPerPage)) { currentPage++; renderAnimalsTable(); } 
-    }
+    function prevPage() { if (currentPage > 1) { currentPage--; renderAnimalsTable(); } }
+    function nextPage() { if (currentPage < Math.ceil(filteredAnimals.length / rowsPerPage)) { currentPage++; renderAnimalsTable(); } }
 
     async function loadVolunteers() {
         try {
