@@ -91,7 +91,37 @@
     </div>
 </div>
 
-<div class="modal fade" id="addAnimalModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Реєстрація тварини</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addAnimalForm"><div class="mb-3"><label>Вид</label><input class="form-control" id="speciesInput" required></div><div class="mb-3"><label>Ім'я</label><input class="form-control" id="nameInput" required></div><div class="mb-3"><label>Стан</label><input class="form-control" id="conditionInput" required></div></form></div><div class="modal-footer"><button class="btn btn-primary" onclick="submitNewAnimal()">Зберегти</button></div></div></div></div>
+<div class="modal fade" id="addAnimalModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title fw-bold">Реєстрація тварини</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <form id="addAnimalForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Вид</label>
+                    <select class="form-select" id="speciesInput" required>
+                        <option value="Кіт">Кіт</option>
+                        <option value="Собака">Собака</option>
+                        <option value="Інше">Інше</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ім'я</label>
+                    <input type="text" class="form-control" id="nameInput" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Стан</label>
+                    <select class="form-select" id="conditionInput" required>
+                        <option value="Здоровий">Здоровий</option>
+                        <option value="На карантині">На карантині</option>
+                        <option value="Травмований">Травмований</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary fw-bold" onclick="submitNewAnimal()">Зберегти</button></div>
+    </div></div>
+</div>
+
 <div class="modal fade" id="addVolunteerModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий волонтер</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addVolunteerForm"><div class="mb-3"><input class="form-control mb-2" id="volNameInput" placeholder="ПІБ" required><input class="form-control mb-2" id="volPhoneInput" placeholder="Телефон" required><input class="form-control" id="volDutyInput" placeholder="Обов'язки" required></div></form></div><div class="modal-footer"><button class="btn btn-success" onclick="submitNewVolunteer()">Зберегти</button></div></div></div></div>
 <div class="modal fade" id="addAdopterModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий адаптер</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addAdopterForm"><div class="mb-3"><input class="form-control mb-2" id="adopterNameInput" placeholder="ПІБ" required><input class="form-control mb-2" id="adopterPhoneInput" placeholder="Телефон" required><input class="form-control" id="adopterAddressInput" placeholder="Адреса" required></div></form></div><div class="modal-footer"><button class="btn btn-warning" onclick="submitNewAdopter()">Зберегти</button></div></div></div></div>
 <div class="modal fade" id="addMedicalModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий запис</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addMedicalForm"><div class="mb-3"><input type="number" class="form-control mb-2" id="medAnimalIdInput" placeholder="ID Тварини" required><input class="form-control mb-2" id="medDiagnosisInput" placeholder="Діагноз" required><input class="form-control" id="medTreatmentInput" placeholder="Лікування" required></div></form></div><div class="modal-footer"><button class="btn btn-danger" onclick="submitNewMedical()">Зберегти</button></div></div></div></div>
