@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelter CRM - Secure Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { height: 100vh; background-color: #212529; color: #fff; padding-top: 20px; position: fixed; width: 16.666667%; z-index: 1000;}
+        .main-content { margin-left: 16.666667%; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 15px 20px; display: block; cursor: pointer; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { color: #fff; background-color: #343a40; border-left: 4px solid #0d6efd; }
+        .dashboard-header { padding: 20px; background-color: #fff; border-bottom: 1px solid #dee2e6; margin-bottom: 20px; }
+        .table-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .stat-card { border-radius: 10px; padding: 20px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        /* Стилі для екрану логіну */
+        #login-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #212529; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box text-center">
+        <h3 class="fw-bold mb-4"><i class="fa-solid fa-lock text-primary me-2"></i>Shelter OS</h3>
+        <input type="text" id="username" class="form-control mb-3" placeholder="Логін (admin)">
+        <input type="password" id="password" class="form-control mb-3" placeholder="Пароль (admin2026)">
+        <button class="btn btn-primary w-100 fw-bold" onclick="login()">Увійти в систему</button>
+        <p id="login-error" class="text-danger mt-3 fw-bold" style="display:none;">Помилка доступу!</p>
+    </div>
+</div>
+
+<div id="app-content" style="display: none;">
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <div class="col-md-2 sidebar">
+                <h4 class="text-center mb-4 fw-bold"><i class="fa-solid fa-paw me-2"></i>Shelter OS</h4>
+                <a onclick="switchSection('animals', this)" class="active"><i class="fa-solid fa-list me-2"></i> Реєстр тварин</a>
+                <a onclick="switchSection('volunteers', this)"><i class="fa-solid fa-users me-2"></i> Волонтери</a>
+                <a onclick="switchSection('adopters', this)"><i class="fa-solid fa-heart me-2"></i> Адопція (Адаптери)</a>
+                <a onclick="switchSection('medical', this)"><i class="fa-solid fa-file-medical me-2"></i> Медична база</a>
+                <a onclick="logout()" class="text-danger mt-5"><i class="fa-solid fa-right-from-bracket me-2"></i> Вихід</a>
+            </div>
+
+            <div class="col-md-10 main-content">
+                <div id="section-animals" class="page-section active">
+                    <div class="dashboard-header d-flex justify-content-between align-items-center">
+                        <h4 class="m-0 text-dark fw-bold">Головна панель управління</h4>
+                        <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addAnimalModal"><i class="fa-solid fa-plus me-2"></i>Додати тварину</button>
+                    </div>
+                    <div class="container-fluid px-4">
+                        <div class="row mb-4">
+                            <div class="col-md-3"><div class="stat-card bg-primary"><h6 class="text-uppercase fw-bold opacity-75">Всього тварин</h6><h2 id="stat-animals" class="fw-bold mb-0">...</h2></div></div>
+                            <div class="col-md-3"><div class="stat-card bg-success"><h6 class="text-uppercase fw-bold opacity-75">Знайшли дім</h6><h2 id="stat-adopted" class="fw-bold mb-0">...</h2></div></div>
+                            <div class="col-md-3"><div class="stat-card bg-warning text-dark"><h6 class="text-uppercase fw-bold opacity-75">Волонтери</h6><h2 id="stat-volunteers" class="fw-bold mb-0">...</h2></div></div>
+                            <div class="col-md-3"><div class="stat-card bg-danger"><h6 class="text-uppercase fw-bold opacity-75">Мед. записи</h6><h2 id="stat-medical" class="fw-bold mb-0">...</h2></div></div>
+                        </div>
+
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Пошук за ім'ям або видом..." onkeyup="handleSearch()">
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="prevPage()"><i class="fa-solid fa-chevron-left"></i> Назад</button>
+                                <span id="pageInfo" class="mx-3 fw-bold text-secondary">Сторінка 1</span>
+                                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="nextPage()">Вперед <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light"><tr><th>ID</th><th>Вид</th><th>Ім'я</th><th>Стан</th><th>Статус</th><th>Дії</th></tr></thead>
+                                <tbody id="animal-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-volunteers" class="page-section"><div class="dashboard-header d-flex justify-content-between align-items-center"><h4 class="m-0 text-dark fw-bold">Волонтери</h4><button class="btn btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#addVolunteerModal"><i class="fa-solid fa-plus me-2"></i>Додати</button></div><div class="container-fluid px-4"><div class="table-container"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>ID</th><th>ПІБ</th><th>Телефон</th><th>Обов'язки</th><th>Дії</th></tr></thead><tbody id="volunteer-table-body"></tbody></table></div></div></div>
+                <div id="section-adopters" class="page-section"><div class="dashboard-header d-flex justify-content-between align-items-center"><h4 class="m-0 text-dark fw-bold">Адаптери</h4><button class="btn btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#addAdopterModal"><i class="fa-solid fa-plus me-2"></i>Додати</button></div><div class="container-fluid px-4"><div class="table-container"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>ID</th><th>ПІБ</th><th>Телефон</th><th>Адреса</th><th>Дії</th></tr></thead><tbody id="adopter-table-body"></tbody></table></div></div></div>
+                <div id="section-medical" class="page-section"><div class="dashboard-header d-flex justify-content-between align-items-center"><h4 class="m-0 text-dark fw-bold">Медичні записи</h4><button class="btn btn-danger fw-bold" data-bs-toggle="modal" data-bs-target="#addMedicalModal"><i class="fa-solid fa-plus me-2"></i>Додати</button></div><div class="container-fluid px-4"><div class="table-container"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>ID</th><th>Тварина</th><th>Діагноз</th><th>Лікування</th><th>Дата</th><th>Дії</th></tr></thead><tbody id="medical-table-body"></tbody></table></div></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addAnimalModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Реєстрація тварини</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addAnimalForm"><div class="mb-3"><label>Вид</label><input class="form-control" id="speciesInput" required></div><div class="mb-3"><label>Ім'я</label><input class="form-control" id="nameInput" required></div><div class="mb-3"><label>Стан</label><input class="form-control" id="conditionInput" required></div></form></div><div class="modal-footer"><button class="btn btn-primary" onclick="submitNewAnimal()">Зберегти</button></div></div></div></div>
+<div class="modal fade" id="addVolunteerModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий волонтер</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addVolunteerForm"><div class="mb-3"><input class="form-control mb-2" id="volNameInput" placeholder="ПІБ" required><input class="form-control mb-2" id="volPhoneInput" placeholder="Телефон" required><input class="form-control" id="volDutyInput" placeholder="Обов'язки" required></div></form></div><div class="modal-footer"><button class="btn btn-success" onclick="submitNewVolunteer()">Зберегти</button></div></div></div></div>
+<div class="modal fade" id="addAdopterModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий адаптер</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addAdopterForm"><div class="mb-3"><input class="form-control mb-2" id="adopterNameInput" placeholder="ПІБ" required><input class="form-control mb-2" id="adopterPhoneInput" placeholder="Телефон" required><input class="form-control" id="adopterAddressInput" placeholder="Адреса" required></div></form></div><div class="modal-footer"><button class="btn btn-warning" onclick="submitNewAdopter()">Зберегти</button></div></div></div></div>
+<div class="modal fade" id="addMedicalModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Новий запис</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="addMedicalForm"><div class="mb-3"><input type="number" class="form-control mb-2" id="medAnimalIdInput" placeholder="ID Тварини" required><input class="form-control mb-2" id="medDiagnosisInput" placeholder="Діагноз" required><input class="form-control" id="medTreatmentInput" placeholder="Лікування" required></div></form></div><div class="modal-footer"><button class="btn btn-danger" onclick="submitNewMedical()">Зберегти</button></div></div></div></div>
+
+<div class="modal fade" id="adoptActionModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title fw-bold">Передати тварину в сім'ю</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="adoptAnimalId">
+            <label class="form-label text-secondary fw-bold">Оберіть нового господаря:</label>
+            <select class="form-select" id="adoptAdopterSelect"></select>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-success fw-bold" onclick="submitAdoption()">Підтвердити передачу</button></div>
+    </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const baseUrl = 'https://shelter-final-production.up.railway.app/api';
+    let token = localStorage.getItem('shelter_token');
+
+    // Перевірка авторизації
+    function checkAuth() {
+        if (token) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            loadAllData();
+        } else {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('app-content').style.display = 'none';
+        }
+    }
+
+    // Логіка входу
+    async function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        try {
+            const res = await fetch(`${baseUrl}/Auth/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                token = data.token;
+                localStorage.setItem('shelter_token', token);
+                document.getElementById('login-error').style.display = 'none';
+                checkAuth();
+            } else { document.getElementById('login-error').style.display = 'block'; }
+        } catch (e) { alert("Помилка з'єднання зі сервером"); }
+    }
+
+    function logout() { localStorage.removeItem('shelter_token'); token = null; checkAuth(); }
+
+    // Універсальний Fetch-запит з токеном безпеки
+    async function apiFetch(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+        const res = await fetch(`${baseUrl}/${endpoint}`, { ...options, headers });
+        if (res.status === 401) { logout(); throw new Error('Сесія закінчилась'); }
+        return res;
+    }
+
+    function switchSection(sectionId, element) {
+        document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+        document.querySelectorAll('.sidebar a').forEach(link => link.classList.remove('active'));
+        document.getElementById(`section-${sectionId}`).classList.add('active');
+        element.classList.add('active');
+    }
+
+    function loadAllData() { loadStats(); loadAnimals(); loadVolunteers(); loadAdopters(); loadMedical(); }
+
+    async function loadStats() {
+        try {
+            const res = await apiFetch('Stats');
+            const stats = await res.json();
+            document.getElementById('stat-animals').innerText = stats.totalAnimals;
+            document.getElementById('stat-adopted').innerText = stats.adoptedAnimals;
+            document.getElementById('stat-volunteers').innerText = stats.totalVolunteers;
+            document.getElementById('stat-medical').innerText = stats.totalMedicalRecords;
+        } catch (e) {}
+    }
+
+    // --- 1. ANIMALS (З ПОШУКОМ ТА ПАГІНАЦІЄЮ) ---
+    let allAnimals = [];
+    let filteredAnimals = [];
+    let currentPage = 1;
+    const rowsPerPage = 5; // Кількість тварин на сторінку
+
+    async function loadAnimals() {
+        try {
+            const res = await apiFetch('Animals');
+            allAnimals = await res.json();
+            filteredAnimals = allAnimals; 
+            currentPage = 1;
+            renderAnimalsTable();
+        } catch (e) { document.getElementById('animal-table-body').innerHTML = '<tr><td colspan="6">Помилка API</td></tr>'; }
+    }
+
+    function handleSearch() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        filteredAnimals = allAnimals.filter(a => 
+            a.name.toLowerCase().includes(query) || 
+            a.species.toLowerCase().includes(query)
+        );
+        currentPage = 1;
+        renderAnimalsTable();
+    }
+
+    function renderAnimalsTable() {
+        const tbody = document.getElementById('animal-table-body');
+        
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedData = filteredAnimals.slice(start, end);
+
+        tbody.innerHTML = paginatedData.map(i => `<tr>
+            <td class="fw-bold text-secondary">A-00${i.animalID}</td><td>${i.species}</td><td class="fw-bold">${i.name}</td>
+            <td><span class="badge ${i.currentCondition === "Здоровий" ? "bg-success" : "bg-danger"}">${i.currentCondition}</span></td>
+            <td><span class="badge ${i.status === 'Adopted' ? 'bg-success' : 'bg-primary'}">${i.status}</span></td>
+            <td>
+                ${i.status !== 'Adopted' ? `<button class="btn btn-sm btn-outline-success me-1" title="Віддати в сім'ю" onclick="openAdoptModal(${i.animalID})"><i class="fa-solid fa-house"></i></button>` : ''}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('Animals', ${i.animalID}, loadAllData)"><i class="fa-solid fa-trash"></i></button>
+            </td></tr>`).join('');
+
+        const totalPages = Math.ceil(filteredAnimals.length / rowsPerPage) || 1;
+        document.getElementById('pageInfo').innerText = `Сторінка ${currentPage} з ${totalPages}`;
+    }
+
+    function prevPage() { 
+        if (currentPage > 1) { currentPage--; renderAnimalsTable(); } 
+    }
+    
+    function nextPage() { 
+        if (currentPage < Math.ceil(filteredAnimals.length / rowsPerPage)) { currentPage++; renderAnimalsTable(); } 
+    }
+
+    async function loadVolunteers() {
+        try {
+            const res = await apiFetch('Volunteers');
+            const data = await res.json();
+            document.getElementById('volunteer-table-body').innerHTML = data.map(i => `<tr><td class="fw-bold text-secondary">V-00${i.volunteerID}</td><td class="fw-bold">${i.fullName}</td><td>${i.phone}</td><td><span class="badge bg-dark">${i.duty}</span></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('Volunteers', ${i.volunteerID}, loadVolunteers)"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+        } catch (e) {}
+    }
+
+    async function loadAdopters() {
+        try {
+            const res = await apiFetch('Adopters');
+            const data = await res.json();
+            document.getElementById('adopter-table-body').innerHTML = data.map(i => `<tr><td class="fw-bold text-secondary">H-00${i.adopterID}</td><td class="fw-bold">${i.fullName}</td><td>${i.phone}</td><td>${i.address}</td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('Adopters', ${i.adopterID}, loadAdopters)"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+        } catch (e) {}
+    }
+
+    async function loadMedical() {
+        try {
+            const res = await apiFetch('MedicalRecords');
+            const data = await res.json();
+            document.getElementById('medical-table-body').innerHTML = data.map(i => `<tr><td class="fw-bold text-secondary">R-00${i.recordID}</td><td class="fw-bold text-primary">A-00${i.animalID}</td><td>${i.diagnosis}</td><td>${i.treatment}</td><td>${new Date(i.recordDate).toLocaleDateString()}</td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('MedicalRecords', ${i.recordID}, loadMedical)"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+        } catch (e) {}
+    }
+
+    // НОВА ФУНКЦІЯ: Відкриття вікна усиновлення
+    async function openAdoptModal(animalId) {
+        document.getElementById('adoptAnimalId').value = animalId;
+        const res = await apiFetch('Adopters');
+        const adopters = await res.json();
+        const select = document.getElementById('adoptAdopterSelect');
+        select.innerHTML = adopters.map(a => `<option value="${a.adopterID}">${a.fullName} (${a.phone})</option>`).join('');
+        new bootstrap.Modal(document.getElementById('adoptActionModal')).show();
+    }
+
+    // НОВА ФУНКЦІЯ: Підтвердження усиновлення
+    async function submitAdoption() {
+        const animalId = document.getElementById('adoptAnimalId').value;
+        const adopterId = document.getElementById('adoptAdopterSelect').value;
+        try {
+            const res = await apiFetch(`Adoption/${animalId}/adopt/${adopterId}`, { method: 'POST' });
+            if(res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('adoptActionModal')).hide();
+                loadAllData();
+            }
+        } catch(e) { alert("Помилка"); }
+    }
+
+    // CRUD Операції
+    async function createItem(endpoint, payload, modalId, formId, reloadFunc) {
+        try {
+            await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
+            bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+            document.getElementById(formId).reset(); reloadFunc(); loadStats();
+        } catch (e) {}
+    }
+
+    async function deleteItem(endpoint, id, reloadFunc) {
+        if (confirm('Видалити цей запис?')) {
+            const res = await apiFetch(`${endpoint}/${id}`, { method: 'DELETE' });
+            if (res.ok) { reloadFunc(); loadStats(); }
+        }
+    }
+
+    async function submitNewAnimal() { await createItem('Animals', { species: document.getElementById('speciesInput').value, name: document.getElementById('nameInput').value, currentCondition: document.getElementById('conditionInput').value, isVaccinated: false, status: "In Shelter" }, 'addAnimalModal', 'addAnimalForm', loadAnimals); }
+    async function submitNewVolunteer() { await createItem('Volunteers', { fullName: document.getElementById('volNameInput').value, phone: document.getElementById('volPhoneInput').value, duty: document.getElementById('volDutyInput').value }, 'addVolunteerModal', 'addVolunteerForm', loadVolunteers); }
+    async function submitNewAdopter() { await createItem('Adopters', { fullName: document.getElementById('adopterNameInput').value, phone: document.getElementById('adopterPhoneInput').value, address: document.getElementById('adopterAddressInput').value }, 'addAdopterModal', 'addAdopterForm', loadAdopters); }
+    async function submitNewMedical() { await createItem('MedicalRecords', { animalID: parseInt(document.getElementById('medAnimalIdInput').value), diagnosis: document.getElementById('medDiagnosisInput').value, treatment: document.getElementById('medTreatmentInput').value }, 'addMedicalModal', 'addMedicalForm', loadMedical); }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+</body>
+</html>
